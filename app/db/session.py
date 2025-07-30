@@ -1,6 +1,7 @@
 """
 Database session configuration using the centralized settings system
 """
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base, Session
 from app.core.config import settings
@@ -11,7 +12,7 @@ if "sqlite" in settings.database.url:
     engine = create_engine(
         settings.database.url,
         echo=settings.database.echo,
-        connect_args={"check_same_thread": False}
+        connect_args={"check_same_thread": False},
     )
 else:
     # PostgreSQL and other databases support connection pooling
@@ -35,7 +36,7 @@ def create_tables():
 def get_db() -> Session:
     """
     Dependency to get database session
-    
+
     Yields:
         Session: SQLAlchemy database session
     """

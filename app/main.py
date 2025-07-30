@@ -1,6 +1,7 @@
 """
 Light Novel Bookmarks API - Main FastAPI application
 """
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -31,9 +32,9 @@ async def lifespan(app: FastAPI):
     logger.info(f"Version: {settings.app.version}")
     create_tables()
     logger.info("Database tables created/verified")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Light Novel Bookmarks API")
 
@@ -50,20 +51,17 @@ app = FastAPI(
     openapi_tags=[
         {
             "name": "novels",
-            "description": "Operations for managing light novels and chapters. Create, read, update, and delete novels and their associated chapters."
+            "description": "Operations for managing light novels and chapters. Create, read, update, and delete novels and their associated chapters.",
         },
         {
             "name": "scraper",
-            "description": "Web scraping operations for importing novels from NovelUpdates. Includes preview, import, and background processing capabilities."
+            "description": "Web scraping operations for importing novels from NovelUpdates. Includes preview, import, and background processing capabilities.",
         },
         {
             "name": "demo",
-            "description": "Demo data creation and testing endpoints. Used for development and testing purposes."
+            "description": "Demo data creation and testing endpoints. Used for development and testing purposes.",
         },
-        {
-            "name": "system",
-            "description": "System health and information endpoints."
-        }
+        {"name": "system", "description": "System health and information endpoints."},
     ],
     contact={
         "name": "Light Novel Bookmarks API",
@@ -72,7 +70,7 @@ app = FastAPI(
     license_info={
         "name": "MIT License",
         "url": "https://opensource.org/licenses/MIT",
-    }
+    },
 )
 
 # Add CORS middleware
@@ -90,16 +88,16 @@ app.add_middleware(
 async def custom_exception_handler(request: Request, exc: LightNovelBookmarksException):
     """Handle custom application exceptions"""
     logger.error(f"Application error: {exc.message}", extra={"details": exc.details})
-    
+
     return JSONResponse(
         status_code=500,
         content={
             "error": {
                 "code": exc.error_code or "INTERNAL_ERROR",
                 "message": exc.message,
-                "details": exc.details
+                "details": exc.details,
             }
-        }
+        },
     )
 
 
@@ -113,9 +111,9 @@ app.include_router(demo_router, prefix="/api", tags=["demo"])
 def read_root():
     """
     Root endpoint
-    
+
     Returns basic API information and health status.
-    
+
     Returns:
         dict: API information including name, version, and status
     """
@@ -125,7 +123,7 @@ def read_root():
         "status": "operational",
         "environment": settings.app.environment,
         "docs_url": "/docs" if settings.app.environment != "production" else "disabled",
-        "description": settings.app.description
+        "description": settings.app.description,
     }
 
 
@@ -133,10 +131,10 @@ def read_root():
 def health_check():
     """
     Health check endpoint
-    
+
     Returns the current health status of the API. This endpoint can be used
     by monitoring systems and load balancers to verify the service is running.
-    
+
     Returns:
         dict: Health status information
     """
@@ -144,7 +142,7 @@ def health_check():
         "status": "healthy",
         "version": settings.app.version,
         "environment": settings.app.environment,
-        "timestamp": "2024-01-01T00:00:00Z"  # In production, use actual timestamp
+        "timestamp": "2024-01-01T00:00:00Z",  # In production, use actual timestamp
     }
 
 
@@ -152,9 +150,9 @@ def health_check():
 def api_info():
     """
     API information endpoint
-    
+
     Provides detailed information about the API capabilities and available endpoints.
-    
+
     Returns:
         dict: Comprehensive API information and feature overview
     """
@@ -168,7 +166,7 @@ def api_info():
             "web_scraping": "Import novels from NovelUpdates with automatic metadata extraction",
             "background_processing": "Asynchronous import for large novels with many chapters",
             "search_and_filter": "Query novels by various criteria",
-            "demo_data": "Pre-built demo novels for testing and development"
+            "demo_data": "Pre-built demo novels for testing and development",
         },
         "data_sources": [
             "NovelUpdates.com - Primary source for novel metadata and chapter information"
@@ -177,11 +175,11 @@ def api_info():
             "chapter_numbering": "Integer and decimal chapters (e.g., 1, 1.5, 2.1)",
             "genres": "Multiple genre tags per novel",
             "status_tracking": "Novel publication status (ongoing, completed, hiatus, etc.)",
-            "content_types": "Chapters, volumes, or mixed content organization"
+            "content_types": "Chapters, volumes, or mixed content organization",
         },
         "api_documentation": {
             "openapi_spec": "/openapi.json",
             "interactive_docs": "/docs",
-            "redoc_docs": "/redoc"
-        }
+            "redoc_docs": "/redoc",
+        },
     }
