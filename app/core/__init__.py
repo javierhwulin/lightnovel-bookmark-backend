@@ -1,0 +1,1 @@
+# Core module for configuration, exceptions, and shared utilities 

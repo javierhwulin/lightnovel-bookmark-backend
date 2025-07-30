@@ -1,0 +1,27 @@
+[project]
+name = "lightnovel-bookmarks-backend"
+version = "0.1.0"
+description = "A personal portal to organize, search, and manage your light novels—track where you left off, rate, and comment, perhaps even discover new tales."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.16.4",
+    "asyncpg>=0.30.0",
+    "beautifulsoup4>=4.12.0",
+    "cloudscraper>=1.2.71",
+    "fastapi>=0.116.1",
+    "lxml>=5.0.0",
+    "pandas>=2.2.0",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+    "requests>=2.32.0",
+    "ruff>=0.12.4",
+    "sqlalchemy>=2.0.41",
+    "uvicorn>=0.35.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-asyncio>=1.1.0",
+]
