@@ -27,18 +27,18 @@ from app.core.exceptions import (
 
 
 def search_novels(
-    db: Session, 
+    db: Session,
     search_query: Optional[str] = None,
     status: Optional[NovelStatus] = None,
     genre: Optional[str] = None,
     limit: int = 50,
     offset: int = 0,
     sort_by: str = "title",
-    sort_order: str = "asc"
+    sort_order: str = "asc",
 ) -> List[LightNovel]:
     """
     Search and filter novels with pagination and sorting
-    
+
     Args:
         db: Database session
         search_query: Search text to match against title or author
@@ -48,48 +48,48 @@ def search_novels(
         offset: Number of results to skip
         sort_by: Field to sort by (title, author, id, status)
         sort_order: Sort direction (asc or desc)
-    
+
     Returns:
         List of LightNovel models matching the criteria
-    
+
     Raises:
         DatabaseError: If database operation fails
     """
     try:
         query = db.query(LightNovel)
-        
+
         # Apply filters
         filters = []
-        
+
         if search_query:
             search_filter = or_(
                 LightNovel.title.ilike(f"%{search_query}%"),
-                LightNovel.author.ilike(f"%{search_query}%")
+                LightNovel.author.ilike(f"%{search_query}%"),
             )
             filters.append(search_filter)
-        
+
         if status:
             filters.append(LightNovel.status == status.value)
-        
+
         if genre:
             # Search for genre in the JSON genres field
             filters.append(LightNovel.genres.like(f'%"{genre}"%'))
-        
+
         if filters:
             query = query.filter(and_(*filters))
-        
+
         # Apply sorting
         sort_column = getattr(LightNovel, sort_by, LightNovel.title)
         if sort_order == "desc":
             query = query.order_by(desc(sort_column))
         else:
             query = query.order_by(asc(sort_column))
-        
+
         # Apply pagination
         query = query.offset(offset).limit(limit)
-        
+
         return query.all()
-        
+
     except SQLAlchemyError as e:
         raise DatabaseError("search_novels", str(e))
 
@@ -97,37 +97,40 @@ def search_novels(
 def get_collection_stats(db: Session) -> Dict[str, Any]:
     """
     Get statistics about the novel collection
-    
+
     Args:
         db: Database session
-    
+
     Returns:
         Dictionary containing collection statistics
-    
+
     Raises:
         DatabaseError: If database operation fails
     """
     try:
         # Total novels count
         total_novels = db.query(func.count(LightNovel.id)).scalar()
-        
+
         # Count by status
         status_counts = {}
         for status in NovelStatus:
-            count = db.query(func.count(LightNovel.id)).filter(
-                LightNovel.status == status.value
-            ).scalar()
+            count = (
+                db.query(func.count(LightNovel.id))
+                .filter(LightNovel.status == status.value)
+                .scalar()
+            )
             status_counts[status.value] = count
-        
+
         # Total chapters count
         total_chapters = db.query(func.count(Chapter.id)).scalar()
-        
+
         # Genre distribution - extract genres from JSON and count them
-        novels_with_genres = db.query(LightNovel.genres).filter(
-            LightNovel.genres.isnot(None),
-            LightNovel.genres != '[]'
-        ).all()
-        
+        novels_with_genres = (
+            db.query(LightNovel.genres)
+            .filter(LightNovel.genres.isnot(None), LightNovel.genres != "[]")
+            .all()
+        )
+
         genre_counts = {}
         for novel_genres in novels_with_genres:
             if novel_genres[0]:  # Check if genres is not None
@@ -138,10 +141,12 @@ def get_collection_stats(db: Session) -> Dict[str, Any]:
                             genre_counts[genre] = genre_counts.get(genre, 0) + 1
                 except (json.JSONDecodeError, TypeError):
                     continue  # Skip invalid JSON
-        
+
         # Sort genres by count (most popular first)
-        sorted_genres = dict(sorted(genre_counts.items(), key=lambda x: x[1], reverse=True))
-        
+        sorted_genres = dict(
+            sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)
+        )
+
         return {
             "total_novels": total_novels,
             "total_chapters": total_chapters,
@@ -149,7 +154,7 @@ def get_collection_stats(db: Session) -> Dict[str, Any]:
             "genre_distribution": sorted_genres,
             "top_genres": list(sorted_genres.keys())[:10],  # Top 10 genres
         }
-        
+
     except SQLAlchemyError as e:
         raise DatabaseError("get_collection_stats", str(e))
 
@@ -157,23 +162,24 @@ def get_collection_stats(db: Session) -> Dict[str, Any]:
 def get_available_genres(db: Session) -> List[str]:
     """
     Get list of all available genres in the collection
-    
+
     Args:
         db: Database session
-    
+
     Returns:
         List of unique genre names sorted by popularity
-    
+
     Raises:
         DatabaseError: If database operation fails
     """
     try:
         # Get all novels with genres
-        novels_with_genres = db.query(LightNovel.genres).filter(
-            LightNovel.genres.isnot(None),
-            LightNovel.genres != '[]'
-        ).all()
-        
+        novels_with_genres = (
+            db.query(LightNovel.genres)
+            .filter(LightNovel.genres.isnot(None), LightNovel.genres != "[]")
+            .all()
+        )
+
         genre_counts = {}
         for novel_genres in novels_with_genres:
             if novel_genres[0]:  # Check if genres is not None
@@ -184,36 +190,38 @@ def get_available_genres(db: Session) -> List[str]:
                             genre_counts[genre] = genre_counts.get(genre, 0) + 1
                 except (json.JSONDecodeError, TypeError):
                     continue  # Skip invalid JSON
-        
+
         # Sort genres by count (most popular first) and return just the names
         sorted_genres = sorted(genre_counts.items(), key=lambda x: x[1], reverse=True)
         return [genre[0] for genre in sorted_genres]
-        
+
     except SQLAlchemyError as e:
         raise DatabaseError("get_available_genres", str(e))
 
 
-def quick_search_novels(db: Session, search_query: str, limit: int = 10) -> List[LightNovel]:
+def quick_search_novels(
+    db: Session, search_query: str, limit: int = 10
+) -> List[LightNovel]:
     """
     Quick search for novels - optimized for autocomplete
-    
+
     Args:
         db: Database session
         search_query: Search text to match against title or author
         limit: Maximum number of results
-    
+
     Returns:
         List of LightNovel models matching the query
-    
+
     Raises:
         DatabaseError: If database operation fails
     """
     try:
         search_filter = or_(
             LightNovel.title.ilike(f"%{search_query}%"),
-            LightNovel.author.ilike(f"%{search_query}%")
+            LightNovel.author.ilike(f"%{search_query}%"),
         )
-        
+
         return (
             db.query(LightNovel)
             .filter(search_filter)
@@ -221,7 +229,7 @@ def quick_search_novels(db: Session, search_query: str, limit: int = 10) -> List
             .limit(limit)
             .all()
         )
-        
+
     except SQLAlchemyError as e:
         raise DatabaseError("quick_search_novels", str(e))
 
@@ -231,41 +239,42 @@ def get_novel_summaries(
     limit: int = 50,
     offset: int = 0,
     sort_by: str = "title",
-    sort_order: str = "asc"
+    sort_order: str = "asc",
 ) -> List[Dict[str, Any]]:
     """
     Get novel summaries with chapter counts
-    
+
     Args:
         db: Database session
         limit: Maximum number of results
         offset: Number of results to skip
         sort_by: Field to sort by
         sort_order: Sort direction
-    
+
     Returns:
         List of novel summary dictionaries with chapter counts
-    
+
     Raises:
         DatabaseError: If database operation fails
     """
     try:
         # Query novels with chapter counts
-        novels_query = db.query(
-            LightNovel,
-            func.count(Chapter.id).label('chapter_count')
-        ).outerjoin(Chapter).group_by(LightNovel.id)
-        
+        novels_query = (
+            db.query(LightNovel, func.count(Chapter.id).label("chapter_count"))
+            .outerjoin(Chapter)
+            .group_by(LightNovel.id)
+        )
+
         # Apply sorting
         sort_column = getattr(LightNovel, sort_by, LightNovel.title)
         if sort_order == "desc":
             novels_query = novels_query.order_by(desc(sort_column))
         else:
             novels_query = novels_query.order_by(asc(sort_column))
-        
+
         # Apply pagination
         results = novels_query.offset(offset).limit(limit).all()
-        
+
         # Convert to summary format
         summaries = []
         for novel, chapter_count in results:
@@ -276,7 +285,7 @@ def get_novel_summaries(
                     genres = json.loads(novel.genres)
                 except (json.JSONDecodeError, TypeError):
                     genres = []
-            
+
             summary = {
                 "id": novel.id,
                 "title": novel.title,
@@ -288,9 +297,9 @@ def get_novel_summaries(
                 "chapter_count": chapter_count or 0,
             }
             summaries.append(summary)
-        
+
         return summaries
-        
+
     except SQLAlchemyError as e:
         raise DatabaseError("get_novel_summaries", str(e))
 

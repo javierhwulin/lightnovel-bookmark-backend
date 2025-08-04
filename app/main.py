@@ -13,7 +13,6 @@ from app.core.exceptions import LightNovelBookmarksException
 from app.db.session import create_tables
 
 # Import models to ensure they're registered with SQLAlchemy
-from app.models import novel, user_preferences
 from app.api.novels import router as novels_router
 from app.api.scraper import router as scraper_router
 from app.api.demo import router as demo_router

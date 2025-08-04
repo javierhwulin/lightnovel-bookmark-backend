@@ -34,24 +34,30 @@ def _handle_service_exception(e: LightNovelBookmarksException):
 @router.get("/novels/search", response_model=List[schemas.LightNovel])
 def search_novels(
     q: Optional[str] = Query(None, description="Search query for title or author"),
-    status: Optional[schemas.NovelStatus] = Query(None, description="Filter by novel status"),
+    status: Optional[schemas.NovelStatus] = Query(
+        None, description="Filter by novel status"
+    ),
     genre: Optional[str] = Query(None, description="Filter by genre (exact match)"),
     limit: int = Query(50, ge=1, le=100, description="Maximum number of results"),
-    offset: int = Query(0, ge=0, description="Number of results to skip for pagination"),
-    sort_by: str = Query("title", description="Sort field: title, author, id, or status"),
+    offset: int = Query(
+        0, ge=0, description="Number of results to skip for pagination"
+    ),
+    sort_by: str = Query(
+        "title", description="Sort field: title, author, id, or status"
+    ),
     sort_order: str = Query("asc", description="Sort order: asc or desc"),
     db: Session = Depends(get_db),
 ) -> List[schemas.LightNovel]:
     """
     Search and filter novels with pagination
-    
+
     Provides comprehensive search and filtering capabilities for the frontend:
     - Search by title or author (case-insensitive partial match)
     - Filter by status (ongoing, completed, hiatus, dropped, unknown)
     - Filter by genre (exact match)
     - Pagination support with limit and offset
     - Sorting by various fields
-    
+
     Args:
         q: Search query to match against title or author
         status: Filter novels by their publication status
@@ -60,10 +66,10 @@ def search_novels(
         offset: Number of novels to skip for pagination
         sort_by: Field to sort by (title, author, id, status)
         sort_order: Sort direction (asc or desc)
-    
+
     Returns:
         List[LightNovel]: Filtered and sorted list of novels
-    
+
     Raises:
         HTTPException: 400 for invalid parameters, 500 for server errors
     """
@@ -72,27 +78,26 @@ def search_novels(
         valid_sort_fields = {"title", "author", "id", "status"}
         if sort_by not in valid_sort_fields:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Invalid sort_by field. Must be one of: {', '.join(valid_sort_fields)}"
+                status_code=400,
+                detail=f"Invalid sort_by field. Must be one of: {', '.join(valid_sort_fields)}",
             )
-        
+
         if sort_order not in {"asc", "desc"}:
             raise HTTPException(
-                status_code=400, 
-                detail="Invalid sort_order. Must be 'asc' or 'desc'"
+                status_code=400, detail="Invalid sort_order. Must be 'asc' or 'desc'"
             )
-        
+
         db_novels = novel_service.search_novels(
-            db, 
+            db,
             search_query=q,
             status=status,
             genre=genre,
             limit=limit,
             offset=offset,
             sort_by=sort_by,
-            sort_order=sort_order
+            sort_order=sort_order,
         )
-        
+
         return [convert_novel_model_to_schema(novel) for novel in db_novels]
     except LightNovelBookmarksException as e:
         _handle_service_exception(e)
@@ -104,16 +109,16 @@ def search_novels(
 def get_novels_stats(db: Session = Depends(get_db)) -> schemas.CollectionStats:
     """
     Get statistics about the novel collection
-    
+
     Provides useful statistics for frontend dashboards:
     - Total novel count
     - Count by status
     - Count by genre
     - Total chapters count
-    
+
     Returns:
         CollectionStats: Collection statistics including counts by status and genre
-    
+
     Raises:
         HTTPException: 500 if database error occurs
     """
@@ -123,20 +128,22 @@ def get_novels_stats(db: Session = Depends(get_db)) -> schemas.CollectionStats:
     except LightNovelBookmarksException as e:
         _handle_service_exception(e)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get statistics: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get statistics: {str(e)}"
+        )
 
 
 @router.get("/novels/genres", response_model=schemas.GenreList)
 def get_available_genres(db: Session = Depends(get_db)) -> schemas.GenreList:
     """
     Get list of all available genres in the collection
-    
+
     Provides a list of unique genres for frontend filter dropdowns and tags.
     Genres are sorted by popularity (most used first).
-    
+
     Returns:
         GenreList: List of available genres with count
-    
+
     Raises:
         HTTPException: 500 if database error occurs
     """
@@ -157,17 +164,17 @@ def quick_search_novels(
 ) -> List[schemas.QuickSearchResult]:
     """
     Quick search for novels - optimized for autocomplete
-    
+
     Provides fast search results for frontend autocomplete/typeahead components.
     Returns minimal data for performance.
-    
+
     Args:
         q: Search query (required, minimum 1 character)
         limit: Maximum number of results (1-20, default 10)
-    
+
     Returns:
         List[QuickSearchResult]: Lightweight novel results for autocomplete
-    
+
     Raises:
         HTTPException: 400 for invalid parameters, 500 for server errors
     """
@@ -178,7 +185,7 @@ def quick_search_novels(
                 id=novel.id,
                 title=novel.title,
                 author=novel.author,
-                cover_url=novel.cover_url
+                cover_url=novel.cover_url,
             )
             for novel in novels
         ]
@@ -192,25 +199,27 @@ def quick_search_novels(
 def get_novel_summaries(
     limit: int = Query(50, ge=1, le=100, description="Maximum number of results"),
     offset: int = Query(0, ge=0, description="Number of results to skip"),
-    sort_by: str = Query("title", description="Sort field: title, author, id, or status"),
+    sort_by: str = Query(
+        "title", description="Sort field: title, author, id, or status"
+    ),
     sort_order: str = Query("asc", description="Sort order: asc or desc"),
     db: Session = Depends(get_db),
 ) -> List[schemas.NovelSummary]:
     """
     Get novel summaries - lightweight novel data for lists
-    
+
     Provides lightweight novel data optimized for frontend lists and grids.
     Includes actual chapter counts from the database.
-    
+
     Args:
         limit: Maximum number of novels to return (1-100)
         offset: Number of novels to skip for pagination
         sort_by: Field to sort by (title, author, id, status)
         sort_order: Sort direction (asc or desc)
-    
+
     Returns:
         List[NovelSummary]: Lightweight novel summaries with chapter counts
-    
+
     Raises:
         HTTPException: 400 for invalid parameters, 500 for server errors
     """
@@ -219,39 +228,40 @@ def get_novel_summaries(
         valid_sort_fields = {"title", "author", "id", "status"}
         if sort_by not in valid_sort_fields:
             raise HTTPException(
-                status_code=400, 
-                detail=f"Invalid sort_by field. Must be one of: {', '.join(valid_sort_fields)}"
+                status_code=400,
+                detail=f"Invalid sort_by field. Must be one of: {', '.join(valid_sort_fields)}",
             )
-        
+
         if sort_order not in {"asc", "desc"}:
             raise HTTPException(
-                status_code=400, 
-                detail="Invalid sort_order. Must be 'asc' or 'desc'"
+                status_code=400, detail="Invalid sort_order. Must be 'asc' or 'desc'"
             )
-        
+
         novels_with_counts = novel_service.get_novel_summaries(
             db, limit=limit, offset=offset, sort_by=sort_by, sort_order=sort_order
         )
-        
+
         return novels_with_counts
     except LightNovelBookmarksException as e:
         _handle_service_exception(e)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get novel summaries: {str(e)}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to get novel summaries: {str(e)}"
+        )
 
 
 @router.get("/novels", response_model=List[schemas.LightNovel])
 def get_novels(db: Session = Depends(get_db)) -> List[schemas.LightNovel]:
     """
     Get all novels
-    
+
     Returns a list of all novels in the database with their basic information.
     Chapters are not included in this endpoint for performance reasons.
     For search and filtering, use the /novels/search endpoint instead.
-    
+
     Returns:
         List[LightNovel]: A list of novels with their metadata
-    
+
     Raises:
         HTTPException: 500 if database error occurs
     """

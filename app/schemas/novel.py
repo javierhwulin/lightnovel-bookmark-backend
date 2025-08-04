@@ -335,7 +335,7 @@ class ErrorResponse(BaseModel):
 # Frontend-optimized schemas
 class PaginatedNovelsResponse(BaseModel):
     """Schema for paginated novel responses"""
-    
+
     novels: List[LightNovel] = Field(..., description="List of novels")
     total: int = Field(..., description="Total number of novels matching criteria")
     limit: int = Field(..., description="Maximum number of results per page")
@@ -346,7 +346,7 @@ class PaginatedNovelsResponse(BaseModel):
 
 class NovelSummary(BaseModel):
     """Lightweight novel schema for lists and summaries"""
-    
+
     id: int = Field(..., description="Unique novel identifier")
     title: str = Field(..., description="Novel title")
     author: str = Field(..., description="Novel author")
@@ -355,33 +355,35 @@ class NovelSummary(BaseModel):
     genres: List[str] = Field(default_factory=list, description="Genre tags")
     total_chapters: int = Field(default=0, description="Total number of chapters")
     chapter_count: int = Field(default=0, description="Actual chapters in database")
-    
+
     model_config = {"from_attributes": True}
 
 
 class CollectionStats(BaseModel):
     """Schema for collection statistics"""
-    
+
     total_novels: int = Field(..., description="Total number of novels")
     total_chapters: int = Field(..., description="Total number of chapters")
-    status_distribution: Dict[str, int] = Field(..., description="Count by novel status")
+    status_distribution: Dict[str, int] = Field(
+        ..., description="Count by novel status"
+    )
     genre_distribution: Dict[str, int] = Field(..., description="Count by genre")
     top_genres: List[str] = Field(..., description="Most popular genres")
 
 
 class GenreList(BaseModel):
     """Schema for available genres list"""
-    
+
     genres: List[str] = Field(..., description="Available genres in the collection")
     count: int = Field(..., description="Total number of unique genres")
 
 
 class QuickSearchResult(BaseModel):
     """Schema for quick search autocomplete results"""
-    
+
     id: int = Field(..., description="Novel identifier")
     title: str = Field(..., description="Novel title")
     author: str = Field(..., description="Novel author")
     cover_url: Optional[str] = Field(default=None, description="Cover image URL")
-    
+
     model_config = {"from_attributes": True}
