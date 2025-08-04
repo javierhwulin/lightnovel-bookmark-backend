@@ -25,8 +25,19 @@ class CORSSettings(BaseSettings):
     """CORS configuration settings"""
 
     origins: List[str] = Field(
-        default=["http://localhost:3000", "http://localhost:8080"],
-        description="Allowed CORS origins",
+        default=[
+            "http://localhost:3000",    # React/Next.js default
+            "http://localhost:8080",    # Vue CLI default  
+            "http://localhost:5173",    # Vite/Svelte default
+            "http://localhost:4173",    # Vite preview mode
+            "http://localhost:5000",    # Common dev port
+            "http://127.0.0.1:3000",    # React/Next.js with 127.0.0.1
+            "http://127.0.0.1:8080",    # Vue CLI with 127.0.0.1
+            "http://127.0.0.1:5173",    # Vite/Svelte with 127.0.0.1
+            "http://127.0.0.1:4173",    # Vite preview with 127.0.0.1
+            "http://127.0.0.1:5000",    # Common dev port with 127.0.0.1
+        ],
+        description="Allowed CORS origins for frontend applications",
     )
     credentials: bool = Field(
         default=True, description="Allow credentials in CORS requests"

@@ -1,0 +1,50 @@
+services:
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - APP_DEBUG=true
+      - APP_ENVIRONMENT=development
+      - DATABASE_URL=sqlite:///light_novels.db
+      - CORS_ORIGINS=http://localhost:5173,http://frontend:5173,http://127.0.0.1:5173
+    volumes:
+      - .:/app
+      - ./light_novels.db:/app/light_novels.db
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - lightnovel-network
+
+  # Frontend service - you can uncomment this when frontend Dockerfile is ready
+  # frontend:
+  #   build:
+  #     context: ../lightnovel-bookmark-frontend
+  #     dockerfile: Dockerfile
+  #   ports:
+  #     - "5173:5173"
+  #   environment:
+  #     - VITE_API_BASE_URL=http://localhost:8000
+  #   volumes:
+  #     - ../lightnovel-bookmark-frontend:/app
+  #     - /app/node_modules
+  #   command: npm run dev -- --host 0.0.0.0
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - lightnovel-network
+
+networks:
+  lightnovel-network:
+    driver: bridge
+
+# Development usage:
+# 1. For backend only: docker compose up backend
+# 2. For both services: docker compose up
+# 3. To rebuild: docker compose up --build
+#
+# Make sure to:
+# 1. Clone the frontend repo in the parent directory as 'lightnovel-bookmark-frontend'
+# 2. Create a .env file based on .env.example
+# 3. Uncomment the frontend service when ready 

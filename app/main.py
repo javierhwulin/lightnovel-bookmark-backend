@@ -11,9 +11,13 @@ from app.core.config import settings
 from app.core.logging import configure_logging, get_logger
 from app.core.exceptions import LightNovelBookmarksException
 from app.db.session import create_tables
+
+# Import models to ensure they're registered with SQLAlchemy
+from app.models import novel, user_preferences
 from app.api.novels import router as novels_router
 from app.api.scraper import router as scraper_router
 from app.api.demo import router as demo_router
+from app.api.user_preferences import router as user_preferences_router
 
 # Configure logging
 configure_logging()
@@ -61,6 +65,10 @@ app = FastAPI(
             "name": "demo",
             "description": "Demo data creation and testing endpoints. Used for development and testing purposes.",
         },
+        {
+            "name": "user-preferences",
+            "description": "User reading preferences and session tracking. Manage reading status, favorites, progress, notes, and analytics.",
+        },
         {"name": "system", "description": "System health and information endpoints."},
     ],
     contact={
@@ -76,7 +84,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors.origins,
+    allow_origins=["*"],
     allow_credentials=settings.cors.credentials,
     allow_methods=settings.cors.methods,
     allow_headers=settings.cors.headers,
@@ -105,6 +113,7 @@ async def custom_exception_handler(request: Request, exc: LightNovelBookmarksExc
 app.include_router(novels_router, prefix="/api", tags=["novels"])
 app.include_router(scraper_router, prefix="/api", tags=["scraper"])
 app.include_router(demo_router, prefix="/api", tags=["demo"])
+app.include_router(user_preferences_router, prefix="/api", tags=["user-preferences"])
 
 
 @app.get("/", tags=["system"])
@@ -167,6 +176,9 @@ def api_info():
             "background_processing": "Asynchronous import for large novels with many chapters",
             "search_and_filter": "Query novels by various criteria",
             "demo_data": "Pre-built demo novels for testing and development",
+            "user_preferences": "Track reading status, favorites, progress, ratings, and personal notes",
+            "reading_sessions": "Monitor reading time and session analytics for productivity insights",
+            "reading_statistics": "Comprehensive analytics including streaks, averages, and progress tracking",
         },
         "data_sources": [
             "NovelUpdates.com - Primary source for novel metadata and chapter information"
@@ -176,6 +188,9 @@ def api_info():
             "genres": "Multiple genre tags per novel",
             "status_tracking": "Novel publication status (ongoing, completed, hiatus, etc.)",
             "content_types": "Chapters, volumes, or mixed content organization",
+            "reading_status": "User reading status (reading, completed, on_hold, dropped, plan_to_read)",
+            "progress_tracking": "Current chapter with decimal precision and automatic date tracking",
+            "session_analytics": "Reading time tracking with device type and duration metrics",
         },
         "api_documentation": {
             "openapi_spec": "/openapi.json",

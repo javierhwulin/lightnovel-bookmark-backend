@@ -255,6 +255,7 @@ uv run mypy app/
     "details": {
       "novel_id": 123
     }
+
   }
 }
 ```

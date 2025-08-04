@@ -3,7 +3,7 @@ Pydantic schemas for Light Novel API data validation and serialization
 """
 
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Union, List
+from typing import Optional, Union, List, Dict
 from enum import Enum
 
 
@@ -330,3 +330,58 @@ class ErrorResponse(BaseModel):
             }
         ],
     )
+
+
+# Frontend-optimized schemas
+class PaginatedNovelsResponse(BaseModel):
+    """Schema for paginated novel responses"""
+    
+    novels: List[LightNovel] = Field(..., description="List of novels")
+    total: int = Field(..., description="Total number of novels matching criteria")
+    limit: int = Field(..., description="Maximum number of results per page")
+    offset: int = Field(..., description="Number of results skipped")
+    has_next: bool = Field(..., description="Whether there are more results available")
+    has_previous: bool = Field(..., description="Whether there are previous results")
+
+
+class NovelSummary(BaseModel):
+    """Lightweight novel schema for lists and summaries"""
+    
+    id: int = Field(..., description="Unique novel identifier")
+    title: str = Field(..., description="Novel title")
+    author: str = Field(..., description="Novel author")
+    cover_url: Optional[str] = Field(default=None, description="Cover image URL")
+    status: NovelStatus = Field(..., description="Publication status")
+    genres: List[str] = Field(default_factory=list, description="Genre tags")
+    total_chapters: int = Field(default=0, description="Total number of chapters")
+    chapter_count: int = Field(default=0, description="Actual chapters in database")
+    
+    model_config = {"from_attributes": True}
+
+
+class CollectionStats(BaseModel):
+    """Schema for collection statistics"""
+    
+    total_novels: int = Field(..., description="Total number of novels")
+    total_chapters: int = Field(..., description="Total number of chapters")
+    status_distribution: Dict[str, int] = Field(..., description="Count by novel status")
+    genre_distribution: Dict[str, int] = Field(..., description="Count by genre")
+    top_genres: List[str] = Field(..., description="Most popular genres")
+
+
+class GenreList(BaseModel):
+    """Schema for available genres list"""
+    
+    genres: List[str] = Field(..., description="Available genres in the collection")
+    count: int = Field(..., description="Total number of unique genres")
+
+
+class QuickSearchResult(BaseModel):
+    """Schema for quick search autocomplete results"""
+    
+    id: int = Field(..., description="Novel identifier")
+    title: str = Field(..., description="Novel title")
+    author: str = Field(..., description="Novel author")
+    cover_url: Optional[str] = Field(default=None, description="Cover image URL")
+    
+    model_config = {"from_attributes": True}
